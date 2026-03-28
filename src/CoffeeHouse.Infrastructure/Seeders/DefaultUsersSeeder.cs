@@ -22,13 +22,11 @@ namespace CoffeeHouse.Infrastructure.Seeders
                     EmailConfirmed = true // Gán true luôn để khỏi bắt xác thực email lằng nhằng
                 };
 
-                // Tạo tài khoản với mật khẩu mặc định (Nhớ có chữ hoa, số và ký tự đặc biệt)
                 var result = await userManager.CreateAsync(newAdmin, "Admin@123");
 
                 if (result.Succeeded)
                 {
                     // Tạo thành công thì khoác ngay cái áo bào "Admin" cho tài khoản ni
-                    //ầefafe
                     await userManager.AddToRoleAsync(newAdmin, "Admin");
                 }
             }
