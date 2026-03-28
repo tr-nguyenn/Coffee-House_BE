@@ -9,7 +9,6 @@ namespace CoffeeHouse.Application.DTOs.Tables
         public TableStatus Status { get; set; }
         public int DisplayOrder { get; set; }
         public DateTime? ActiveOrderTime { get; set; }
-
         public Guid AreaId { get; set; }
         public string AreaName { get; set; } = string.Empty;
     }

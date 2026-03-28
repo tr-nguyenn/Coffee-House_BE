@@ -47,7 +47,9 @@ namespace CoffeeHouse.Application.Services.Implementations
                     AreaName = t.Area != null ? t.Area.Name : "N/A",
                     IsInUse = activeOrder != null, // true: Đỏ (Có khách), false: Xanh (Trống)
                     ActiveOrderId = activeOrder?.Id,
-                    ActiveOrderCode = activeOrder?.OrderCode
+                    ActiveOrderCode = activeOrder?.OrderCode,
+                    ActiveOrderTime = activeOrder?.CreatedAt,
+                    DisplayOrder = t.DisplayOrder
                 };
             }).ToList();
 

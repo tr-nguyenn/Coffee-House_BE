@@ -31,9 +31,11 @@ namespace CoffeeHouse.Application.DTOs.Orders
         public Guid TableId { get; set; }
         public string TableName { get; set; } = string.Empty;
         public string AreaName { get; set; } = string.Empty;
-        public bool IsInUse { get; set; } // true: Đỏ (Có khách), false: Xanh (Trống)
-        public Guid? ActiveOrderId { get; set; } // Nếu Đỏ thì trả về ID của cái Bill đang mở
+        public bool IsInUse { get; set; }
+        public Guid? ActiveOrderId { get; set; }
         public string? ActiveOrderCode { get; set; }
+        public DateTime? ActiveOrderTime { get; set; }
+        public int DisplayOrder { get; set; }
     }
 
     public class CheckoutOrderDto
