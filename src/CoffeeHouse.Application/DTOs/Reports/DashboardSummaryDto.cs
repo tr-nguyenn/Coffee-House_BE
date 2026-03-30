@@ -15,6 +15,7 @@
             public decimal TotalRevenue { get; set; }
             public int TotalOrders { get; set; }
             public decimal AverageOrderValue { get; set; }
+            public int TotalCustomers { get; set; }
 
             public List<RevenueByDateDto> RevenueTrends { get; set; } = new();
             public List<TopProductDto> TopSellingProducts { get; set; } = new();

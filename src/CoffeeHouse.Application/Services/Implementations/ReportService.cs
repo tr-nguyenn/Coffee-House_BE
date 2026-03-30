@@ -45,6 +45,7 @@ namespace CoffeeHouse.Application.Services.Implementations
             summary.TotalRevenue = completedOrders.Sum(o => o.FinalAmount);
             summary.TotalOrders = completedOrders.Count;
             summary.AverageOrderValue = summary.TotalOrders > 0 ? summary.TotalRevenue / summary.TotalOrders : 0;
+            summary.TotalCustomers = completedOrders.Where(o => o.CustomerId != null).Select(o => o.CustomerId).Distinct().Count();
 
             // Trend: Doanh thu theo từng ngày (Nhóm theo ngày)
             summary.RevenueTrends = completedOrders
