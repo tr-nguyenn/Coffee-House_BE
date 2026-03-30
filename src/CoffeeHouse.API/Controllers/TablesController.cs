@@ -59,7 +59,7 @@ namespace CoffeeHouse.API.Controllers
             try
             {
                 var result = await _tableService.GetTablesWithStatusAsync();
-                return Ok(result); // Trả về HTTP 200 kèm danh sách bàn
+                return Ok(result);
             }
             catch (Exception ex)
             {

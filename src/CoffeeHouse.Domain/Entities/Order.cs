@@ -21,8 +21,8 @@ namespace CoffeeHouse.Domain.Entities
         public decimal DiscountAmount { get; set; } = 0;
         public decimal FinalAmount { get; set; }
 
-        public Guid? UserId { get; set; }
-
+        public Guid? CustomerId { get; set; }
+        public virtual Customer? Customer { get; set; }
         public Guid? TableId { get; set; }
         public virtual Table? Table { get; set; }
 

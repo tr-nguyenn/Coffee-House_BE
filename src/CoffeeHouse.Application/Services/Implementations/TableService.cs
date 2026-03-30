@@ -24,34 +24,27 @@ namespace CoffeeHouse.Application.Services.Implementations
 
         public async Task<List<TableStatusDto>> GetTablesWithStatusAsync()
         {
-            // 1. Lấy TẤT CẢ các bàn, chỉ include Khu vực (Area) thôi, KHÔNG include Orders kiểu phức tạp nữa
-            var tables = await _unitOfWork.Repository<Table>()
+            var result = await _unitOfWork.Repository<Table>()
                 .GetQueryable()
-                .Include(t => t.Area)
-                .ToListAsync();
-
-            // 2. Lấy TẤT CẢ các đơn hàng đang ở trạng thái Processing (đang phục vụ) trong DB ra
-            var activeOrders = await _unitOfWork.Repository<Order>()
-                .GetQueryable()
-                .Where(o => o.Status == OrderStatus.Processing)
-                .ToListAsync();
-
-            // 3. Gom nhóm: Duyệt qua danh sách bàn và so sánh bằng code C#
-            var result = tables.Select(t => {
-                var activeOrder = activeOrders.FirstOrDefault(o => o.TableId == t.Id);
-
-                return new TableStatusDto
+                .AsNoTracking()
+                .Select(t => new TableStatusDto
                 {
                     TableId = t.Id,
                     TableName = t.Name,
-                    AreaName = t.Area != null ? t.Area.Name : "N/A",
-                    IsInUse = activeOrder != null, // true: Đỏ (Có khách), false: Xanh (Trống)
-                    ActiveOrderId = activeOrder?.Id,
-                    ActiveOrderCode = activeOrder?.OrderCode,
-                    ActiveOrderTime = activeOrder?.CreatedAt,
-                    DisplayOrder = t.DisplayOrder
-                };
-            }).ToList();
+                    AreaName = t.Area != null ? t.Area.Name : "Chưa xếp",
+                    DisplayOrder = t.DisplayOrder,
+                    AreaDisplayOrder = t.Area != null ? t.Area.DisplayOrder : 9999, // Phép màu nằm ở đây
+                    IsInUse = t.Orders.Any(o => o.Status == OrderStatus.Processing),
+                    ActiveOrderId = t.Orders.Where(o => o.Status == OrderStatus.Processing)
+                                            .Select(o => (Guid?)o.Id).FirstOrDefault(),
+                    ActiveOrderCode = t.Orders.Where(o => o.Status == OrderStatus.Processing)
+                                              .Select(o => o.OrderCode).FirstOrDefault(),
+                    ActiveOrderTime = t.Orders.Where(o => o.Status == OrderStatus.Processing)
+                                              .Select(o => (DateTime?)o.CreatedAt).FirstOrDefault()
+                })
+                .OrderBy(dto => dto.AreaDisplayOrder)
+                .ThenBy(dto => dto.DisplayOrder)
+                .ToListAsync();
 
             return result;
         }
@@ -174,5 +167,7 @@ namespace CoffeeHouse.Application.Services.Implementations
             _unitOfWork.Repository<Table>().Delete(table);
             await _unitOfWork.SaveChangesAsync();
         }
+
+
     }
 }

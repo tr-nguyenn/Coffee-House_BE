@@ -3,6 +3,7 @@ using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Mappings;
 using CoffeeHouse.Application.Services.Implementations;
 using CoffeeHouse.Application.Services.Interfaces;
+using CoffeeHouse.Domain.Entities;
 using CoffeeHouse.Infrastructure;
 using CoffeeHouse.Infrastructure.Repositories;
 using CoffeeHouse.Infrastructure.Services;
@@ -115,7 +116,7 @@ namespace CoffeeHouse.API
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IAreaService, AreaService>();
             builder.Services.AddScoped<ITableService, TableService>();
-            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<IStaffService, StaffService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IReportService, ReportService>();

@@ -10,7 +10,6 @@ namespace CoffeeHouse.Domain.Entities
         public TableStatus Status { get; set; } = TableStatus.Available;
         public int DisplayOrder { get; set; } = 0;
 
-        // Khóa ngoại trỏ về bảng Area
         public Guid AreaId { get; set; }
         public virtual Area Area { get; set; } = null!;
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.DTOs.Users;
+﻿using CoffeeHouse.Application.DTOs.Customer;
 using CoffeeHouse.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,17 +8,17 @@ namespace CoffeeHouse.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin,Staff")]
-    public class UsersController : ControllerBase
+    public class CustomersController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly ICustomerService _userService;
 
-        public UsersController(IUserService userService)
+        public CustomersController(ICustomerService userService)
         {
             _userService = userService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] UserFilterDto filterDto)
+        public async Task<IActionResult> GetAll([FromQuery] CustomerFilterDto filterDto)
         {
             return Ok(await _userService.GetAllPagedAsync(filterDto));
         }

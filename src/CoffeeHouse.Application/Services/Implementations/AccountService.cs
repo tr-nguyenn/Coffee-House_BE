@@ -25,7 +25,6 @@ namespace CoffeeHouse.Application.Services.Implementations
 
         public async Task<bool> RegisterAsync(RegisterDto dto)
         {
-            // 1. Tạo thực thể ApplicationUser
             var appUser = new ApplicationUser
             {
                 UserName = dto.UserName,
@@ -34,11 +33,9 @@ namespace CoffeeHouse.Application.Services.Implementations
             };
 
             var result = await _userManager.CreateAsync(appUser, dto.Password);
-
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(appUser, "Customer");
-                // 3. Nếu tạo tài khoản thành công, tạo tiếp hồ sơ ở bảng Domain User
                 var domainUser = new Customer
                 {
                     IdentityId = appUser.Id.ToString(),
@@ -52,7 +49,6 @@ namespace CoffeeHouse.Application.Services.Implementations
                 return true;
             }
 
-            // Nếu lỗi (ví dụ mật khẩu yếu), bạn có thể ném Exception ở đây
             return false;
         }
 
@@ -86,6 +82,7 @@ namespace CoffeeHouse.Application.Services.Implementations
             return null;
         }
 
+        
         public async Task<bool> CreateStaffAccountAsync(CreateStaffDto dto)
         {
             // 1. Tạo thực thể Identity
@@ -105,7 +102,7 @@ namespace CoffeeHouse.Application.Services.Implementations
                 await _userManager.AddToRoleAsync(appUser, dto.Role);
 
                 // 3. LƯU VÀO BẢNG STAFF (KHÔNG PHẢI BẢNG USER)
-                var staff = new Staff // Giả sử mi có entity Staff cho Nhân viên
+                var staff = new Staff
                 {
                     IdentityId = appUser.Id.ToString(),
                     FullName = dto.FullName,

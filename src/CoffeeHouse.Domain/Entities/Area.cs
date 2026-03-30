@@ -1,6 +1,5 @@
 ﻿
 
-
 using CoffeeHouse.Domain.Common;
 
 namespace CoffeeHouse.Domain.Entities

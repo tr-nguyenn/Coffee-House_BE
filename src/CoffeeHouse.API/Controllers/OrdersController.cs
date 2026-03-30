@@ -139,5 +139,19 @@ namespace CoffeeHouse.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("management")]
+        public async Task<IActionResult> GetManagementOrders([FromQuery] OrderFilterDto filter)
+        {
+            try
+            {
+                var result = await _orderService.GetManagementOrdersAsync(filter);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

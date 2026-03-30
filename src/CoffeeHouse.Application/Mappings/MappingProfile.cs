@@ -4,7 +4,7 @@ using CoffeeHouse.Application.DTOs.Categories;
 using CoffeeHouse.Application.DTOs.Products;
 using CoffeeHouse.Application.DTOs.Staffs;
 using CoffeeHouse.Application.DTOs.Tables;
-using CoffeeHouse.Application.DTOs.Users;
+using CoffeeHouse.Application.DTOs.Customer;
 using CoffeeHouse.Domain.Entities;
 using CoffeeHouse.Infrastructure;
 

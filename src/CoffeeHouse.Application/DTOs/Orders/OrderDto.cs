@@ -19,13 +19,11 @@ namespace CoffeeHouse.Application.DTOs.Orders
         public string? Note { get; set; }
     }
 
-    // DTO để gọi thêm món vào Bill cũ
     public class AddOrderItemsDto
     {
         public List<CreateOrderDetailDto> NewItems { get; set; } = new List<CreateOrderDetailDto>();
     }
 
-    // DTO để đổ dữ liệu ra Cột Trái (Danh sách Bàn kèm trạng thái)
     public class TableStatusDto
     {
         public Guid TableId { get; set; }
@@ -36,19 +34,17 @@ namespace CoffeeHouse.Application.DTOs.Orders
         public string? ActiveOrderCode { get; set; }
         public DateTime? ActiveOrderTime { get; set; }
         public int DisplayOrder { get; set; }
+        public int AreaDisplayOrder { get; set; }
     }
 
     public class CheckoutOrderDto
     {
-        public string PaymentMethod { get; set; } = "Cash"; // Tiền mặt (Cash) hoặc Chuyển khoản (Transfer)
-        // Sau này mi có thể thêm Khách đưa bao nhiêu, thối lại bao nhiêu vô đây
-        public Guid? CustomerId { get; set; } // Nếu chọn từ danh sách khách có sẵn
-        public string? CustomerName { get; set; } // Nếu là khách vãng lai đọc tên
-        public string? CustomerPhone { get; set; } // Nếu khách vãng lai đọc SĐT
-
-        public string? VoucherCode { get; set; } // Mã giảm giá khách đưa
-
-        // (Tùy chọn) Tính tiền thối
-        public decimal AmountTendered { get; set; } // Tiền khách đưa
+        public string PaymentMethod { get; set; } = "Cash"; 
+        public Guid? CustomerId { get; set; } 
+        public string? CustomerName { get; set; } 
+        public string? CustomerPhone { get; set; } 
+        public string? VoucherCode { get; set; }
+        public decimal AmountTendered { get; set; }
+        public int PointsUsed { get; set; } = 0;
     }
 }

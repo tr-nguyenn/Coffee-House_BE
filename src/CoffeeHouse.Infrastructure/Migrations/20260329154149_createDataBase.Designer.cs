@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoffeeHouse.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260328105435_createDataBase")]
+    [Migration("20260329154149_createDataBase")]
     partial class createDataBase
     {
         /// <inheritdoc />
@@ -178,6 +178,8 @@ namespace CoffeeHouse.Infrastructure.Migrations
                     b.HasIndex("StaffId");
 
                     b.HasIndex("TableId");
+
+                    b.HasIndex("UserId");
 
                     b.HasIndex("VoucherId");
 
@@ -591,6 +593,10 @@ namespace CoffeeHouse.Infrastructure.Migrations
                         .WithMany("Orders")
                         .HasForeignKey("TableId");
 
+                    b.HasOne("CoffeeHouse.Infrastructure.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
                     b.HasOne("CoffeeHouse.Domain.Entities.Voucher", "Voucher")
                         .WithMany("Orders")
                         .HasForeignKey("VoucherId");
@@ -598,6 +604,8 @@ namespace CoffeeHouse.Infrastructure.Migrations
                     b.Navigation("CreatedByStaff");
 
                     b.Navigation("Table");
+
+                    b.Navigation("User");
 
                     b.Navigation("Voucher");
                 });

@@ -1,6 +1,6 @@
-﻿namespace CoffeeHouse.Application.DTOs.Users
+﻿namespace CoffeeHouse.Application.DTOs.Customer
 {
-    public class CreateUserDto
+    public class UpdateUserDto
     {
         public string FullName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;

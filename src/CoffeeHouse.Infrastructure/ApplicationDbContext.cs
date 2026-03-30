@@ -28,7 +28,6 @@ namespace CoffeeHouse.Infrastructure
             base.OnModelCreating(builder);
 
             // 2. Đổi tên các bảng Identity (PHẢI DÙNG <Guid>)
-            // Nếu bạn dùng <string> ở đây, code sẽ báo lỗi ngay lập tức
             builder.Entity<ApplicationUser>().ToTable("AppUsers");
             builder.Entity<IdentityRole<Guid>>().ToTable("AppRoles");
             builder.Entity<IdentityUserRole<Guid>>().ToTable("AppUserRoles");
@@ -43,7 +42,7 @@ namespace CoffeeHouse.Infrastructure
                 entity.HasIndex(e => e.IdentityId).IsUnique();
             });
 
-            // 3.1 Category Configuration (Bạn có thể viết trực tiếp hoặc tách file)
+            // 3.1 Category Configuration
             builder.Entity<Category>(entity => {
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
             });

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CoffeeHouse.Application.Common;
-using CoffeeHouse.Application.DTOs.Users;
+using CoffeeHouse.Application.DTOs.Customer;
+using CoffeeHouse.Application.Exceptions;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Services.Interfaces;
 using CoffeeHouse.Domain.Entities;
@@ -11,20 +12,20 @@ using System.Linq.Expressions;
 
 namespace CoffeeHouse.Application.Services.Implementations
 {
-    public class UserService : IUserService
+    public class CustomerService : ICustomerService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper, UserManager<ApplicationUser> userManager)
+        public CustomerService(IUnitOfWork unitOfWork, IMapper mapper, UserManager<ApplicationUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _userManager = userManager;
         }
 
-        public async Task<PagedResult<UserDto>> GetAllPagedAsync(UserFilterDto filterDto)
+        public async Task<PagedResult<UserDto>> GetAllPagedAsync(CustomerFilterDto filterDto)
         {
             var searchTerm = filterDto.Search?.Trim().ToLower();
             Expression<Func<Customer, bool>>? filter = null;
@@ -35,12 +36,11 @@ namespace CoffeeHouse.Application.Services.Implementations
                               u.PhoneNumber.Contains(searchTerm);
             }
 
-            // Gọi Repository của bảng Customer (Domain)
             var result = await _unitOfWork.Repository<Customer>().GetAllPagedAsync(
                 pageNumber: filterDto.PageNumber,
                 pageSize: filterDto.PageSize,
                 filter: filter,
-                orderBy: q => q.OrderByDescending(u => u.CreatedAt)
+                orderBy: q => q.OrderBy(u => u.CreatedAt)
             );
 
             return new PagedResult<UserDto>
@@ -62,35 +62,30 @@ namespace CoffeeHouse.Application.Services.Implementations
         {
             // 1. Kiểm tra SĐT đã tồn tại bên Domain chưa
             var existing = await _unitOfWork.Repository<Customer>().GetAllPagedAsync(filter: u => u.PhoneNumber == dto.PhoneNumber);
-            if (existing.TotalCount > 0) throw new Exception("Số điện thoại ni đã đăng ký thẻ thành viên rồi.");
+            if (existing.TotalCount > 0) throw new BadRequestException("Số điện thoại ni đã đăng ký thẻ thành viên rồi.");
 
-            // 2. TẠO TÀI KHOẢN ĐĂNG NHẬP (IDENTITY)
             var appUser = new ApplicationUser
             {
-                UserName = dto.PhoneNumber, // Dùng SĐT làm tên đăng nhập
+                UserName = dto.PhoneNumber, 
                 PhoneNumber = dto.PhoneNumber,
                 FullName = dto.FullName,
-                Email = $"{dto.PhoneNumber}@khachhang.coffee" // Email giả để pass validation
+                Email = $"{dto.PhoneNumber}@gmail.com"
             };
 
-            var result = await _userManager.CreateAsync(appUser, "Coffee@123"); // Pass mặc định
+            var result = await _userManager.CreateAsync(appUser, "@Coffee123");
             if (!result.Succeeded)
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
                 throw new Exception($"Lỗi tạo tài khoản đăng nhập: {errors}");
             }
 
-            // Gắn quyền Khách hàng
             await _userManager.AddToRoleAsync(appUser, "Customer");
 
-            // 3. TẠO HỒ SƠ KHÁCH HÀNG (DOMAIN)
             var customer = _mapper.Map<Customer>(dto);
-            customer.IdentityId = appUser.Id.ToString(); // Móc xích 2 bảng lại với nhau
-            customer.RewardPoints = 0; // Khách mới mặc định 0 điểm
-
+            customer.IdentityId = appUser.Id.ToString(); 
+            customer.RewardPoints = 0;
             await _unitOfWork.Repository<Customer>().AddAsync(customer);
             await _unitOfWork.SaveChangesAsync();
-
             return _mapper.Map<UserDto>(customer);
         }
 

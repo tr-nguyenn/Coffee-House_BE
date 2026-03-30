@@ -33,16 +33,10 @@ namespace CoffeeHouse.Application.Services.Implementations
                 query = query.Where(u => u.Email.ToLower().Contains(search) ||
                                          u.FullName.ToLower().Contains(search));
             }
-
-            // 👉 1. TÌM TẤT CẢ ID CỦA NHỮNG NGƯỜI LÀ "CUSTOMER"
             var customers = await _userManager.GetUsersInRoleAsync("Customer");
             var customerIds = customers.Select(c => c.Id).ToList();
-
-            // 👉 2. LOẠI TRỪ HỌ KHỎI CÂU TRUY VẤN
             query = query.Where(u => !customerIds.Contains(u.Id));
-
             var totalCount = query.Count();
-
             var users = query
                 .Skip((filterDto.PageNumber - 1) * filterDto.PageSize)
                 .Take(filterDto.PageSize)
@@ -56,7 +50,6 @@ namespace CoffeeHouse.Application.Services.Implementations
                 staffDtos.Add(dto);
             }
 
-            // Lọc theo Role cụ thể (nếu Admin muốn lọc trên UI)
             if (!string.IsNullOrWhiteSpace(filterDto.Role))
             {
                 staffDtos = staffDtos.Where(s => s.Roles.Contains(filterDto.Role)).ToList();
@@ -98,7 +91,6 @@ namespace CoffeeHouse.Application.Services.Implementations
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded) throw new Exception(result.Errors.First().Description);
 
-            // Gán quyền
             if (await _roleManager.RoleExistsAsync(dto.Role))
             {
                 await _userManager.AddToRoleAsync(user, dto.Role);
@@ -114,14 +106,12 @@ namespace CoffeeHouse.Application.Services.Implementations
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null) throw new Exception("Nỏ tìm thấy nhân viên.");
 
-            // Cập nhật thông tin cơ bản
             user.FullName = dto.FullName;
             user.PhoneNumber = dto.PhoneNumber;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded) throw new Exception(result.Errors.First().Description);
 
-            // Cập nhật Quyền (Xóa quyền cũ, thêm quyền mới)
             var currentRoles = await _userManager.GetRolesAsync(user);
             await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
@@ -135,8 +125,6 @@ namespace CoffeeHouse.Application.Services.Implementations
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null) throw new Exception("Nỏ tìm thấy nhân viên.");
-
-            // Nên chặn việc tự xóa chính mình nếu cần
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded) throw new Exception("Xóa nhân viên thất bại.");
         }
