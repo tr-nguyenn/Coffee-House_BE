@@ -25,13 +25,12 @@ namespace CoffeeHouse.Domain.Entities
         public virtual Customer? Customer { get; set; }
         public Guid? TableId { get; set; }
         public virtual Table? Table { get; set; }
-
-        public Guid? VoucherId { get; set; }
-        public virtual Voucher? Voucher { get; set; }
-
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
         public Guid CreatedByStaffId { get; set; }
         public virtual ApplicationUser CreatedByStaff { get; set; } = null!;
+
+        public Guid? VoucherId { get; set; }
+        public virtual Voucher? Voucher { get; set; }
     }
 }

@@ -19,9 +19,9 @@ namespace CoffeeHouse.Infrastructure
         public DbSet<Product> Products { get; set; }
         public DbSet<Area> Areas { get; set; }
         public DbSet<Table> Tables { get; set; }
-        public DbSet<Voucher> Vouchers { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<Voucher> Vouchers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
