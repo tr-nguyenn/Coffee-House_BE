@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.Exceptions;
+using CoffeeHouse.Application.Exceptions;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Mappings;
 using CoffeeHouse.Application.Services.Implementations;
@@ -121,6 +121,7 @@ namespace CoffeeHouse.API
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+            builder.Services.AddScoped<IVoucherService, VoucherService>();
 
 
             // 2. KHỞI TẠO BIẾN app Ở ĐÂY

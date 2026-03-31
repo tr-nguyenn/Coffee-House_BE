@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Domain.Entities;
+using CoffeeHouse.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -87,6 +87,15 @@ namespace CoffeeHouse.Infrastructure
 
             builder.Entity<OrderDetail>(entity => {
                 entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+            });
+
+            // 3.6 Cấu hình Voucher (Mã giảm giá)
+            builder.Entity<Voucher>(entity => {
+                entity.HasIndex(v => v.Code).IsUnique();
+                entity.Property(v => v.Code).IsRequired().HasMaxLength(50);
+                entity.Property(v => v.DiscountValue).HasColumnType("decimal(18,2)");
+                entity.Property(v => v.MaxDiscountAmount).HasColumnType("decimal(18,2)");
+                entity.Property(v => v.MinOrderAmount).HasColumnType("decimal(18,2)");
             });
         }
     }

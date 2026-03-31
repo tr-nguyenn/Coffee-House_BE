@@ -44,6 +44,7 @@ namespace CoffeeHouse.Application.DTOs.Orders
         public string? CustomerName { get; set; } 
         public string? CustomerPhone { get; set; } 
         public string? VoucherCode { get; set; }
+        public Guid? VoucherId { get; set; }
         public decimal AmountTendered { get; set; }
         public int PointsUsed { get; set; } = 0;
     }

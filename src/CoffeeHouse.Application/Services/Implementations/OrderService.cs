@@ -127,7 +127,28 @@ namespace CoffeeHouse.Application.Services.Implementations
             // 6. XỬ LÝ VOUCHER KHUYẾN MÃI (Nếu có)
             if (dto.VoucherId.HasValue)
             {
-                // Logic voucher (Nếu có mở ra thì nhớ cộng dồn tiền giảm vào biến totalDiscount)
+                var voucher = await _unitOfWork.Repository<Voucher>().GetByIdAsync(dto.VoucherId.Value);
+                if (voucher != null && voucher.IsActive && voucher.UsedCount < voucher.UsageLimit)
+                {
+                    decimal voucherDiscount = 0;
+                    if (voucher.DiscountType == DiscountType.FixedAmount)
+                    {
+                        voucherDiscount = voucher.DiscountValue;
+                    }
+                    else // Percentage
+                    {
+                        voucherDiscount = finalAmount * voucher.DiscountValue / 100;
+                        if (voucher.MaxDiscountAmount.HasValue && voucherDiscount > voucher.MaxDiscountAmount.Value)
+                            voucherDiscount = voucher.MaxDiscountAmount.Value;
+                    }
+
+                    totalDiscount += voucherDiscount;
+                    finalAmount -= voucherDiscount;
+                    if (finalAmount < 0) finalAmount = 0;
+
+                    voucher.UsedCount++;
+                    _unitOfWork.Repository<Voucher>().Update(voucher);
+                }
             }
 
             // 7. Chốt tiền và GÁN DISCOUNT XUỐNG DB
@@ -289,6 +310,34 @@ namespace CoffeeHouse.Application.Services.Implementations
                 order.Note = string.IsNullOrEmpty(order.Note)
                     ? $"Khách vãng lai: {dto.CustomerName} - {dto.CustomerPhone}"
                     : order.Note + $" | Khách vãng lai: {dto.CustomerName} - {dto.CustomerPhone}";
+            }
+
+            // 👉 XỬ LÝ VOUCHER LÚC CHECKOUT (Nếu có)
+            if (dto.VoucherId.HasValue)
+            {
+                order.VoucherId = dto.VoucherId;
+                var voucher = await _unitOfWork.Repository<Voucher>().GetByIdAsync(dto.VoucherId.Value);
+                if (voucher != null && voucher.IsActive && voucher.UsedCount < voucher.UsageLimit)
+                {
+                    decimal voucherDiscount = 0;
+                    if (voucher.DiscountType == DiscountType.FixedAmount)
+                    {
+                        voucherDiscount = voucher.DiscountValue;
+                    }
+                    else // Percentage
+                    {
+                        voucherDiscount = finalAmount * voucher.DiscountValue / 100;
+                        if (voucher.MaxDiscountAmount.HasValue && voucherDiscount > voucher.MaxDiscountAmount.Value)
+                            voucherDiscount = voucher.MaxDiscountAmount.Value;
+                    }
+
+                    totalDiscount += voucherDiscount;
+                    finalAmount -= voucherDiscount;
+                    if (finalAmount < 0) finalAmount = 0;
+
+                    voucher.UsedCount++;
+                    _unitOfWork.Repository<Voucher>().Update(voucher);
+                }
             }
 
             // 👉 CHỐT TIỀN XUỐNG ENTITY
