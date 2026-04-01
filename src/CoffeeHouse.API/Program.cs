@@ -1,3 +1,4 @@
+using CoffeeHouse.API.Hubs;
 using CoffeeHouse.Application.Exceptions;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Mappings;
@@ -27,6 +28,7 @@ namespace CoffeeHouse.API
             // --- 1. CORE API SERVICES ---
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSignalR();
 
             // Cấu hình Swagger để hỗ trợ Token JWT
             builder.Services.AddSwaggerGen(options =>
@@ -185,6 +187,7 @@ namespace CoffeeHouse.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapHub<PaymentHub>("/paymentHub");
             app.Run();
         }
     }
