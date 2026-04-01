@@ -97,7 +97,8 @@ namespace CoffeeHouse.API
                 {
                     policy.WithOrigins("http://localhost:5173")
                           .AllowAnyHeader()
-                          .AllowAnyMethod();
+                          .AllowAnyMethod()
+                          .AllowCredentials(); // Bắt buộc phải có cho SignalR
                 });
             });
 
