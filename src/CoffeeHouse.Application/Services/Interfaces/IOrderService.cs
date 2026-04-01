@@ -13,6 +13,7 @@ namespace CoffeeHouse.Application.Services.Interfaces
         Task<List<KitchenTicketDto>> GetPendingKitchenItemsAsync();
         Task MarkItemReadyAsync(Guid orderDetailId);
         Task<OrderDto> OpenTableAsync(Guid tableId, Guid currentStaffId);
+        Task UpdatePaymentMethodAsync(Guid orderId, string paymentMethod);
         Task<PagedResult<OrderManagementDto>> GetManagementOrdersAsync(OrderFilterDto filter);
     }
 }

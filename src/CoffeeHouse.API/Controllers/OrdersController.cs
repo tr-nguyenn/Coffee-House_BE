@@ -140,6 +140,21 @@ namespace CoffeeHouse.API.Controllers
             }
         }
 
+        [HttpPut("{id}/payment-method")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> UpdatePaymentMethod(Guid id, [FromBody] string paymentMethod)
+        {
+            try
+            {
+                await _orderService.UpdatePaymentMethodAsync(id, paymentMethod);
+                return Ok(new { message = "Đã cập nhật phương thức thanh toán" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("management")]
         public async Task<IActionResult> GetManagementOrders([FromQuery] OrderFilterDto filter)
         {

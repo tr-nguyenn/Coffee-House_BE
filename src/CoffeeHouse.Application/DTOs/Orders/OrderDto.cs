@@ -35,6 +35,7 @@ namespace CoffeeHouse.Application.DTOs.Orders
         public DateTime? ActiveOrderTime { get; set; }
         public int DisplayOrder { get; set; }
         public int AreaDisplayOrder { get; set; }
+        public string? PaymentMethod { get; set; }
     }
 
     public class CheckoutOrderDto

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CoffeeHouse.Application.Common;
 using CoffeeHouse.Application.DTOs.Orders;
 using CoffeeHouse.Application.DTOs.Tables;
@@ -40,7 +40,9 @@ namespace CoffeeHouse.Application.Services.Implementations
                     ActiveOrderCode = t.Orders.Where(o => o.Status == OrderStatus.Processing)
                                               .Select(o => o.OrderCode).FirstOrDefault(),
                     ActiveOrderTime = t.Orders.Where(o => o.Status == OrderStatus.Processing)
-                                              .Select(o => (DateTime?)o.CreatedAt).FirstOrDefault()
+                                              .Select(o => (DateTime?)o.CreatedAt).FirstOrDefault(),
+                    PaymentMethod = t.Orders.Where(o => o.Status == OrderStatus.Processing)
+                                              .Select(o => o.PaymentMethod).FirstOrDefault()
                 })
                 .OrderBy(dto => dto.AreaDisplayOrder)
                 .ThenBy(dto => dto.DisplayOrder)

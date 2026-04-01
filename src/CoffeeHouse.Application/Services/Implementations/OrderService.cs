@@ -438,6 +438,16 @@ namespace CoffeeHouse.Application.Services.Implementations
             };
         }
 
+        public async Task UpdatePaymentMethodAsync(Guid orderId, string paymentMethod)
+        {
+            var order = await _unitOfWork.Repository<Order>().GetByIdAsync(orderId);
+            if (order == null) throw new Exception("Không tìm thấy đơn hàng.");
+
+            order.PaymentMethod = paymentMethod;
+            _unitOfWork.Repository<Order>().Update(order);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         public async Task<PagedResult<OrderManagementDto>> GetManagementOrdersAsync(OrderFilterDto filter)
         {
             // 1. Khởi tạo Query cơ bản với AsNoTracking để tối ưu hiệu năng đọc (Read-only)
