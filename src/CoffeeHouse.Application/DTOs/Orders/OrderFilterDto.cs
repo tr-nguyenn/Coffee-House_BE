@@ -1,4 +1,4 @@
-﻿namespace CoffeeHouse.Application.DTOs.Orders
+namespace CoffeeHouse.Application.DTOs.Orders
 {
     public class OrderFilterDto
     {
@@ -8,7 +8,7 @@
         public DateTime? EndDate { get; set; }
         public List<string>? Statuses { get; set; }
         public string? PaymentMethod { get; set; }
-
+        public Guid? CreatedBy { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }

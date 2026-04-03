@@ -1,4 +1,4 @@
-﻿namespace CoffeeHouse.Application.DTOs.Orders
+namespace CoffeeHouse.Application.DTOs.Orders
 {
     public class OrderManagementDto
     {
@@ -7,6 +7,7 @@
         public DateTime CreatedAt { get; set; }
         public string? TableName { get; set; }
         public string? CustomerName { get; set; }
+        public string? CashierName { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal DiscountAmount { get; set; }
         public decimal FinalAmount { get; set; }

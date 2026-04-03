@@ -456,13 +456,13 @@ namespace CoffeeHouse.Application.Services.Implementations
                 .AsNoTracking()
                 .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
                 .Include(o => o.Table)
-                .Include(o => o.Customer); // 👉 Đã có bảng Customer để lấy thông tin
+                .Include(o => o.Customer)
+                .Include(o => o.CreatedByStaff); // 👉 Include để lấy tên Thu ngân
 
             // 2. LỌC THEO TỪ KHÓA (Search)
             if (!string.IsNullOrWhiteSpace(filter.Search))
             {
                 var searchTerm = filter.Search.Trim().ToLower();
-                // 👉 ĐÃ FIX: Mở rộng vùng tìm kiếm sang cả Tên và SĐT của Khách hàng trong DB
                 query = query.Where(o =>
                     o.OrderCode.ToLower().Contains(searchTerm) ||
                     (o.Note != null && o.Note.ToLower().Contains(searchTerm)) ||
@@ -474,7 +474,6 @@ namespace CoffeeHouse.Application.Services.Implementations
             // 3. LỌC THEO TRẠNG THÁI (Statuses)
             if (filter.Statuses != null && filter.Statuses.Any())
             {
-                // 👉 ĐÃ FIX TỐI ƯU EF CORE: Ép kiểu chuỗi sang Enum trước khi query để tránh lỗi "Translation Failed"
                 var statusEnums = filter.Statuses
                     .Select(s => Enum.TryParse<OrderStatus>(s, true, out var parsedStatus) ? parsedStatus : (OrderStatus?)null)
                     .Where(e => e.HasValue)
@@ -493,33 +492,50 @@ namespace CoffeeHouse.Application.Services.Implementations
                 query = query.Where(o => o.PaymentMethod == filter.PaymentMethod);
             }
 
-            // 5. LỌC THEO THỜI GIAN
-            var today = DateTime.UtcNow.Date;
+            // 4.5. LỌC THEO NHÂN VIÊN TẠO ĐƠN
+            if (filter.CreatedBy.HasValue)
+            {
+                query = query.Where(o => o.CreatedByStaffId == filter.CreatedBy.Value);
+            }
+
+            // 5. LỌC THEO THỜI GIAN (Đã fix Timezone UTC+7 cho Việt Nam)
+            var vnNow = DateTime.UtcNow.AddHours(7);
+            var vnToday = vnNow.Date;
+            // Chuyển lại về UTC để so sánh với dữ liệu trong DB (CreatedAt lưu UTC)
+            var todayUtcStart = vnToday.AddHours(-7);
+
             switch (filter.TimeRange)
             {
                 case "today":
-                    query = query.Where(o => o.CreatedAt >= today);
+                    query = query.Where(o => o.CreatedAt >= todayUtcStart);
                     break;
                 case "yesterday":
-                    var yesterday = today.AddDays(-1);
-                    query = query.Where(o => o.CreatedAt >= yesterday && o.CreatedAt < today);
+                    var yesterdayUtcStart = todayUtcStart.AddDays(-1);
+                    query = query.Where(o => o.CreatedAt >= yesterdayUtcStart && o.CreatedAt < todayUtcStart);
                     break;
                 case "thisWeek":
-                    var startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-                    query = query.Where(o => o.CreatedAt >= startOfWeek);
+                    int diff = (int)vnToday.DayOfWeek - (int)DayOfWeek.Monday;
+                    if (diff < 0) diff += 7;
+                    var mondayVn = vnToday.AddDays(-diff);
+                    var mondayUtcStart = mondayVn.AddHours(-7);
+                    query = query.Where(o => o.CreatedAt >= mondayUtcStart);
                     break;
                 case "thisMonth":
-                    var startOfMonth = new DateTime(today.Year, today.Month, 1);
-                    query = query.Where(o => o.CreatedAt >= startOfMonth);
+                    var firstOfMonthVn = new DateTime(vnToday.Year, vnToday.Month, 1);
+                    var firstOfMonthUtcStart = firstOfMonthVn.AddHours(-7);
+                    query = query.Where(o => o.CreatedAt >= firstOfMonthUtcStart);
                     break;
                 case "custom":
                     if (filter.StartDate.HasValue)
-                        query = query.Where(o => o.CreatedAt >= filter.StartDate.Value.Date);
+                    {
+                        var startUtc = filter.StartDate.Value.Date.AddHours(-7);
+                        query = query.Where(o => o.CreatedAt >= startUtc);
+                    }
                     if (filter.EndDate.HasValue)
                     {
-                        // Bao gồm trọn vẹn cả ngày EndDate (đến 23:59:59)
-                        var endOfDay = filter.EndDate.Value.Date.AddDays(1).AddTicks(-1);
-                        query = query.Where(o => o.CreatedAt <= endOfDay);
+                        // Bao gồm trọn vẹn cả ngày EndDate (đến 23:59:59 giờ VN → chuyển sang UTC)
+                        var endUtc = filter.EndDate.Value.Date.AddDays(1).AddHours(-7);
+                        query = query.Where(o => o.CreatedAt < endUtc);
                     }
                     break;
             }
@@ -539,10 +555,12 @@ namespace CoffeeHouse.Application.Services.Implementations
                     CreatedAt = o.CreatedAt,
                     TableName = o.Table != null ? o.Table.Name : null,
 
-                    // 👉 ĐÃ FIX: Ưu tiên bốc tên từ bảng Customer (khách quen), nếu không có mới móc trong Note (Khách vãng lai)
-                    CustomerName = o.Customer != null ? o.Customer.FullName : o.Note,
+                    // 👉 Ưu tiên tên từ bảng Customer, nếu không có thì lấy từ Note
+                    CustomerName = o.Customer != null ? o.Customer.FullName : null,
 
-                    // 👉 ĐÃ FIX: Trả đủ 3 cục tiền để Frontend vẽ lên bảng
+                    // 👉 Tên Thu ngân (Nhân viên tạo đơn)
+                    CashierName = o.CreatedByStaff != null ? o.CreatedByStaff.FullName : "N/A",
+
                     TotalAmount = o.TotalAmount,
                     DiscountAmount = o.DiscountAmount,
                     FinalAmount = o.FinalAmount,
@@ -567,6 +585,105 @@ namespace CoffeeHouse.Application.Services.Implementations
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
             };
+        }
+
+        public async Task<byte[]> ExportManagementOrdersToExcelAsync(OrderFilterDto filter)
+        {
+            // Lấy TẤT CẢ dữ liệu (Không phân trang) bằng cách đặt pageSize cực lớn
+            filter.PageNumber = 1;
+            filter.PageSize = 100000;
+            var result = await GetManagementOrdersAsync(filter);
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var ws = workbook.Worksheets.Add("Hóa đơn");
+
+            // === HEADER ROW ===
+            var headers = new[] { "STT", "Mã HĐ", "Ngày tạo", "Bàn", "Khách hàng", "Thu ngân", "Tổng gốc", "Giảm giá", "Thực thu", "Trạng thái", "Thanh toán" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                ws.Cell(1, i + 1).Value = headers[i];
+            }
+
+            // Style header
+            var headerRange = ws.Range(1, 1, 1, headers.Length);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#1F4E79");
+            headerRange.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+            headerRange.Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+            headerRange.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+
+            // === DATA ROWS ===
+            var statusMap = new Dictionary<string, string>
+            {
+                { "Completed", "Hoàn thành" },
+                { "Processing", "Đang phục vụ" },
+                { "Cancelled", "Đã hủy" }
+            };
+            var paymentMap = new Dictionary<string, string>
+            {
+                { "Cash", "Tiền mặt" },
+                { "Banking", "Chuyển khoản / QR" },
+                { "Card", "Thẻ / Ví" }
+            };
+
+            int row = 2;
+            int stt = 1;
+            foreach (var order in result.Items)
+            {
+                ws.Cell(row, 1).Value = stt++;
+                ws.Cell(row, 2).Value = order.OrderCode;
+                ws.Cell(row, 3).Value = order.CreatedAt.AddHours(7); // Hiển thị giờ VN
+                ws.Cell(row, 3).Style.NumberFormat.Format = "dd/MM/yyyy HH:mm";
+                ws.Cell(row, 4).Value = order.TableName ?? "Mang đi";
+                ws.Cell(row, 5).Value = order.CustomerName ?? "Khách lẻ";
+                ws.Cell(row, 6).Value = order.CashierName ?? "N/A";
+                ws.Cell(row, 7).Value = order.TotalAmount;
+                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0";
+                ws.Cell(row, 8).Value = order.DiscountAmount;
+                ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0";
+                ws.Cell(row, 9).Value = order.FinalAmount;
+                ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0";
+                ws.Cell(row, 10).Value = statusMap.GetValueOrDefault(order.Status, order.Status);
+                ws.Cell(row, 11).Value = paymentMap.GetValueOrDefault(order.PaymentMethod ?? "", order.PaymentMethod ?? "");
+
+                // Tô màu xen kẽ dòng cho dễ đọc
+                if (row % 2 == 0)
+                {
+                    ws.Range(row, 1, row, headers.Length).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#F2F7FB");
+                }
+                row++;
+            }
+
+            // Viền cho toàn bộ dữ liệu
+            if (result.Items.Any())
+            {
+                var dataRange = ws.Range(1, 1, row - 1, headers.Length);
+                dataRange.Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+                dataRange.Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+            }
+
+            // Auto-fit cột
+            ws.Columns().AdjustToContents();
+
+            // === DÒNG TỔNG KẾT ===
+            row++;
+            ws.Cell(row, 6).Value = "TỔNG CỘNG:";
+            ws.Cell(row, 6).Style.Font.Bold = true;
+            ws.Cell(row, 7).FormulaA1 = $"SUM(G2:G{row - 2})";
+            ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0";
+            ws.Cell(row, 7).Style.Font.Bold = true;
+            ws.Cell(row, 8).FormulaA1 = $"SUM(H2:H{row - 2})";
+            ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0";
+            ws.Cell(row, 8).Style.Font.Bold = true;
+            ws.Cell(row, 9).FormulaA1 = $"SUM(I2:I{row - 2})";
+            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0";
+            ws.Cell(row, 9).Style.Font.Bold = true;
+            ws.Cell(row, 9).Style.Font.FontColor = ClosedXML.Excel.XLColor.Red;
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
         }
     }
 }

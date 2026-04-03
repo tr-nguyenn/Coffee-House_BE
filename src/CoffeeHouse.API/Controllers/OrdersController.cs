@@ -168,5 +168,21 @@ namespace CoffeeHouse.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("management/export-excel")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportManagementOrdersToExcel([FromQuery] OrderFilterDto filter)
+        {
+            try
+            {
+                var fileBytes = await _orderService.ExportManagementOrdersToExcelAsync(filter);
+                var fileName = $"HoaDon_{DateTime.UtcNow.AddHours(7):yyyyMMdd_HHmmss}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

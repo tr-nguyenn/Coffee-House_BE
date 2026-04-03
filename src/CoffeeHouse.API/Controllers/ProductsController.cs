@@ -8,7 +8,6 @@ namespace CoffeeHouse.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Staff")]
     public class ProductsController : ControllerBase
     {
         private readonly IProductService _productService;

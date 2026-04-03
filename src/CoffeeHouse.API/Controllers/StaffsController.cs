@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.DTOs.Staffs;
+using CoffeeHouse.Application.DTOs.Staffs;
 using CoffeeHouse.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +21,15 @@ namespace CoffeeHouse.API.Controllers
         public async Task<IActionResult> GetAll([FromQuery] StaffFilterDto filterDto)
         {
             return Ok(await _staffService.GetAllPagedAsync(filterDto));
+        }
+
+        // 👉 Endpoint nhẹ: Trả về danh sách (Id, FullName) cho Dropdown lọc ở trang Quản lý hóa đơn
+        [HttpGet("simple-list")]
+        public async Task<IActionResult> GetSimpleList()
+        {
+            var allStaff = await _staffService.GetAllPagedAsync(new StaffFilterDto { PageSize = 500 });
+            var simpleList = allStaff.Items.Select(s => new { s.Id, Name = s.FullName }).ToList();
+            return Ok(simpleList);
         }
 
         [HttpGet("{id}")]

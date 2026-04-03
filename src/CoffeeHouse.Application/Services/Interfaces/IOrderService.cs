@@ -15,5 +15,6 @@ namespace CoffeeHouse.Application.Services.Interfaces
         Task<OrderDto> OpenTableAsync(Guid tableId, Guid currentStaffId);
         Task UpdatePaymentMethodAsync(Guid orderId, string paymentMethod);
         Task<PagedResult<OrderManagementDto>> GetManagementOrdersAsync(OrderFilterDto filter);
+        Task<byte[]> ExportManagementOrdersToExcelAsync(OrderFilterDto filter);
     }
 }

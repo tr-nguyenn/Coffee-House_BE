@@ -8,7 +8,6 @@ namespace CoffeeHouse.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Staff")]
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -27,6 +26,7 @@ namespace CoffeeHouse.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _categoryService.GetByIdAsync(id);
@@ -34,6 +34,7 @@ namespace CoffeeHouse.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Create([FromBody] CreateUpdateCategoryDto dto)
         {
             var result = await _categoryService.CreateAsync(dto);
@@ -41,6 +42,7 @@ namespace CoffeeHouse.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Update(Guid id, [FromBody] CreateUpdateCategoryDto dto)
         {
             try
@@ -55,6 +57,7 @@ namespace CoffeeHouse.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
