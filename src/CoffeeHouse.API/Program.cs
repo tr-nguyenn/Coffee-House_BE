@@ -1,4 +1,5 @@
 using CoffeeHouse.API.Hubs;
+using CoffeeHouse.Application.DTOs.Settings;
 using CoffeeHouse.Application.Exceptions;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Mappings;
@@ -29,6 +30,7 @@ namespace CoffeeHouse.API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSignalR();
+            builder.Services.AddMemoryCache();
 
             // Cấu hình Swagger để hỗ trợ Token JWT
             builder.Services.AddSwaggerGen(options =>
@@ -125,6 +127,8 @@ namespace CoffeeHouse.API
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IInvoiceService, InvoiceService>();
             builder.Services.AddScoped<IVoucherService, VoucherService>();
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddScoped<IEmailService, EmailService>();
 
 
             // 2. KHỞI TẠO BIẾN app Ở ĐÂY

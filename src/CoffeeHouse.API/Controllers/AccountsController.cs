@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.Common;
+using CoffeeHouse.Application.Common;
 using CoffeeHouse.Application.DTOs.Accounts;
 using CoffeeHouse.Application.DTOs.Staffs;
 using CoffeeHouse.Application.Services.Interfaces;
@@ -53,6 +53,39 @@ namespace CoffeeHouse.API.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            try
+            {
+                var encodedToken = await _accountService.ForgotPasswordAsync(dto);
+
+                // Trả token về cho Frontend (Dùng để TEST, Production thì chỉ gửi qua Email)
+                return Ok(ApiResponse<string>.SuccessResult(encodedToken, "Mã xác nhận đã được gửi đến email của bạn."));
+            }
+            catch (Exception ex)
+            {
+                // Vẫn trả Ok để tránh lộ email tồn tại hay không
+                return Ok(ApiResponse<string>.SuccessResult(null!, ex.Message));
+            }
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            try
+            {
+                await _accountService.ResetPasswordAsync(dto);
+                return Ok(ApiResponse<string>.SuccessResult("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", "Thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<string>.FailureResult(ex.Message));
             }
         }
     }
