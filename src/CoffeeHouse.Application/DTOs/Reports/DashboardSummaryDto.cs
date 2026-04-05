@@ -1,4 +1,4 @@
-﻿namespace CoffeeHouse.Application.DTOs.Reports
+namespace CoffeeHouse.Application.DTOs.Reports
 {
     namespace CoffeeHouse.Application.DTOs.Reports
     {
@@ -43,6 +43,21 @@
             public string PaymentMethod { get; set; } = string.Empty;
             public int Count { get; set; }
             public decimal TotalAmount { get; set; }
+        }
+
+        // Báo cáo Doanh thu theo ngày (có thêm số đơn)
+        public class RevenueReportItemDto
+        {
+            public string Date { get; set; } = string.Empty;
+            public decimal TotalRevenue { get; set; }
+            public int OrderCount { get; set; }
+        }
+
+        // Báo cáo Giờ cao điểm
+        public class PeakHourDto
+        {
+            public int Hour { get; set; }
+            public int OrderCount { get; set; }
         }
     }
 }

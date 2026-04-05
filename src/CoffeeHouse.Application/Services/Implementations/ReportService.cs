@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.DTOs.Reports.CoffeeHouse.Application.DTOs.Reports;
+using CoffeeHouse.Application.DTOs.Reports.CoffeeHouse.Application.DTOs.Reports;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Services.Interfaces;
 using CoffeeHouse.Domain.Entities;
@@ -81,6 +81,101 @@ namespace CoffeeHouse.Application.Services.Implementations
                 }).ToList();
 
             return summary;
+        }
+
+        // =============================================
+        // BÁO CÁO 1: DOANH THU THEO NGÀY
+        // Nhóm theo ngày -> Tổng doanh thu + Số đơn
+        // =============================================
+        public async Task<List<RevenueReportItemDto>> GetRevenueReportAsync(DateTime startDate, DateTime endDate)
+        {
+            var endOfDay = endDate.Date.AddDays(1).AddTicks(-1);
+
+            var orders = await _unitOfWork.Repository<Order>().GetQueryable()
+                .Where(o => o.Status == OrderStatus.Completed)
+                .Where(o => o.CreatedAt >= startDate.Date && o.CreatedAt <= endOfDay)
+                .ToListAsync();
+
+            // Nhóm theo Date, tính tổng doanh thu và đếm số đơn mỗi ngày
+            var result = orders
+                .GroupBy(o => o.CreatedAt.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new RevenueReportItemDto
+                {
+                    Date = g.Key.ToString("dd/MM/yyyy"),
+                    TotalRevenue = g.Sum(o => o.FinalAmount),
+                    OrderCount = g.Count()
+                })
+                .ToList();
+
+            return result;
+        }
+
+        // =============================================
+        // BÁO CÁO 2: TOP 10 SẢN PHẨM BÁN CHẠY
+        // Join Order -> OrderDetail -> Product
+        // =============================================
+        public async Task<List<TopProductDto>> GetTopProductsReportAsync(DateTime startDate, DateTime endDate)
+        {
+            var endOfDay = endDate.Date.AddDays(1).AddTicks(-1);
+
+            // Lấy danh sách ID các đơn hoàn thành trong khoảng thời gian
+            var completedOrderIds = await _unitOfWork.Repository<Order>().GetQueryable()
+                .Where(o => o.Status == OrderStatus.Completed)
+                .Where(o => o.CreatedAt >= startDate.Date && o.CreatedAt <= endOfDay)
+                .Select(o => o.Id)
+                .ToListAsync();
+
+            // Join bảng OrderDetail với Product, lọc theo đơn đã hoàn thành
+            var orderDetails = await _unitOfWork.Repository<OrderDetail>().GetQueryable()
+                .Include(od => od.Product)
+                .Where(od => completedOrderIds.Contains(od.OrderId))
+                .ToListAsync();
+
+            // Nhóm theo tên sản phẩm, tính tổng số lượng và doanh thu
+            var result = orderDetails
+                .GroupBy(od => od.Product?.Name ?? "Sản phẩm bị xóa")
+                .Select(g => new TopProductDto
+                {
+                    ProductName = g.Key,
+                    TotalQuantity = g.Sum(od => od.Quantity),
+                    TotalRevenue = g.Sum(od => od.Quantity * od.UnitPrice)
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .Take(10) // Top 10
+                .ToList();
+
+            return result;
+        }
+
+        // =============================================
+        // BÁO CÁO 3: GIỜ CAO ĐIỂM (0h - 23h)
+        // Nhóm theo giờ trong ngày -> Đếm đơn
+        // =============================================
+        public async Task<List<PeakHourDto>> GetPeakHoursReportAsync(DateTime startDate, DateTime endDate)
+        {
+            var endOfDay = endDate.Date.AddDays(1).AddTicks(-1);
+
+            var orders = await _unitOfWork.Repository<Order>().GetQueryable()
+                .Where(o => o.Status == OrderStatus.Completed)
+                .Where(o => o.CreatedAt >= startDate.Date && o.CreatedAt <= endOfDay)
+                .ToListAsync();
+
+            // Nhóm theo giờ (Hour) của CreatedAt
+            var grouped = orders
+                .GroupBy(o => o.CreatedAt.Hour)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Tạo đủ 24 giờ (0h-23h) để biểu đồ hiển thị đầy đủ
+            var result = Enumerable.Range(0, 24)
+                .Select(hour => new PeakHourDto
+                {
+                    Hour = hour,
+                    OrderCount = grouped.GetValueOrDefault(hour, 0)
+                })
+                .ToList();
+
+            return result;
         }
     }
 }
