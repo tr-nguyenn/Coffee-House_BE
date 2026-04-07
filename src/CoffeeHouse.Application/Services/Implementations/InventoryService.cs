@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.DTOs.Inventory;
+using CoffeeHouse.Application.DTOs.Inventory;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Services.Interfaces;
 using CoffeeHouse.Domain.Entities;
@@ -149,6 +149,56 @@ namespace CoffeeHouse.Application.Services.Implementations
 
             await _uow.SaveChangesAsync();
             return true;
+        }
+
+        // ==========================================
+        // 4. XEM LỊCH SỬ KHO
+        // ==========================================
+        public async Task<IEnumerable<InventoryTransactionDto>> GetTransactionsAsync(int? type = null, Guid? materialId = null, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            var query = _uow.Repository<InventoryTransaction>().GetQueryable()
+                            .Include(t => t.Material)
+                            .AsQueryable();
+
+            if (type.HasValue)
+            {
+                var transactionType = (TransactionType)type.Value;
+                query = query.Where(t => t.Type == transactionType);
+            }
+
+            if (materialId.HasValue)
+            {
+                query = query.Where(t => t.MaterialId == materialId.Value);
+            }
+
+            if (fromDate.HasValue)
+            {
+                var from = fromDate.Value.Date;
+                query = query.Where(t => t.CreatedAt >= from);
+            }
+
+            if (toDate.HasValue)
+            {
+                var to = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(t => t.CreatedAt <= to);
+            }
+
+            var transactions = await query.OrderByDescending(t => t.CreatedAt)
+                                          .Select(t => new InventoryTransactionDto
+                                          {
+                                              Id = t.Id,
+                                              MaterialId = t.MaterialId,
+                                              MaterialName = t.Material.Name,
+                                              Type = t.Type,
+                                              QuantityChanged = t.QuantityChanged,
+                                              RemainingQuantity = t.RemainingQuantity,
+                                              ReferenceId = t.ReferenceId,
+                                              Note = t.Note,
+                                              CreatedAt = t.CreatedAt
+                                          })
+                                          .ToListAsync();
+
+            return transactions;
         }
     }
 }

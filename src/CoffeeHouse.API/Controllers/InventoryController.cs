@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.DTOs.Inventory;
+using CoffeeHouse.Application.DTOs.Inventory;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Services.Interfaces;
 using CoffeeHouse.Domain.Entities;
@@ -119,19 +119,30 @@ namespace CoffeeHouse.API.Controllers
             }
         }
 
+        [HttpGet("transactions")]
+        public async Task<IActionResult> GetTransactions([FromQuery] int? type, [FromQuery] Guid? materialId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var transactions = await _inventoryService.GetTransactionsAsync(type, materialId, fromDate, toDate);
+                return Ok(transactions);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPut("materials/{id}")]
         public async Task<IActionResult> UpdateMaterial(Guid id, [FromBody] MaterialDto dto)
         {
             var material = await _uow.Repository<Material>().GetByIdAsync(id);
             if (material == null) return NotFound("Không tìm thấy vật tư");
-
             material.Name = dto.Name;
             material.Unit = dto.Unit;
             material.MinStockLevel = dto.MinStockLevel;
-
             _uow.Repository<Material>().Update(material);
             await _uow.SaveChangesAsync();
-
             return Ok(new { message = "Cập nhật thành công" });
         }
     }

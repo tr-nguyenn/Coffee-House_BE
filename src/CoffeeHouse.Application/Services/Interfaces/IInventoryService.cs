@@ -1,4 +1,4 @@
-﻿using CoffeeHouse.Application.DTOs.Inventory;
+using CoffeeHouse.Application.DTOs.Inventory;
 
 namespace CoffeeHouse.Application.Services.Interfaces
 {
@@ -14,5 +14,7 @@ namespace CoffeeHouse.Application.Services.Interfaces
         //Cài đặt định lượng cho món ăn
         Task<bool> SetProductRecipeAsync(Guid productId, List<RecipeItemDto> recipeItems);
 
+        // Lấy lịch sử xuất nhập kho (Hỗ trợ lọc theo loại, vật tư, thời gian)
+        Task<IEnumerable<InventoryTransactionDto>> GetTransactionsAsync(int? type = null, Guid? materialId = null, DateTime? fromDate = null, DateTime? toDate = null);
     }
 }
