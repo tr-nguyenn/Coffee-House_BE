@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CoffeeHouse.Application.DTOs.Inventory;
 using CoffeeHouse.Application.DTOs.Invoices;
 using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Services.Interfaces;

@@ -2,6 +2,7 @@ using CoffeeHouse.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace CoffeeHouse.Infrastructure
 {
@@ -22,6 +23,9 @@ namespace CoffeeHouse.Infrastructure
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<Voucher> Vouchers { get; set; }
+        public DbSet<Material> Materials { get; set; }
+        public DbSet<ProductRecipe> ProductRecipes { get; set; }
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -96,6 +100,49 @@ namespace CoffeeHouse.Infrastructure
                 entity.Property(v => v.DiscountValue).HasColumnType("decimal(18,2)");
                 entity.Property(v => v.MaxDiscountAmount).HasColumnType("decimal(18,2)");
                 entity.Property(v => v.MinOrderAmount).HasColumnType("decimal(18,2)");
+            });
+
+            // CẤU HÌNH MATERIAL (VẬT TƯ)
+            builder.Entity<Material>(entity =>
+            {
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Unit).IsRequired().HasMaxLength(50);
+                // Định dạng số thập phân: 18 chữ số, 3 số sau dấu phẩy (Ví dụ: 1.500 kg)
+                entity.Property(e => e.StockQuantity).HasColumnType("decimal(18, 3)");
+                entity.Property(e => e.MinStockLevel).HasColumnType("decimal(18, 3)");
+                entity.Property(e => e.CostPerUnit).HasColumnType("decimal(18, 2)");
+            });
+
+            // CẤU HÌNH PRODUCT RECIPE (CÔNG THỨC)
+            builder.Entity<ProductRecipe>(entity =>
+            {
+                entity.Property(e => e.Quantity).HasColumnType("decimal(18, 3)");
+
+                // 1 Sản phẩm và 1 Vật tư chỉ được xuất hiện cùng nhau 1 lần (Tránh lỗi add trùng bột cafe 2 lần cho 1 ly cafe)
+                entity.HasIndex(e => new { e.ProductId, e.MaterialId }).IsUnique();
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.ProductRecipes)
+                    .HasForeignKey(d => d.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade); // Xóa Món thì xóa luôn công thức
+
+                entity.HasOne(d => d.Material)
+                    .WithMany(p => p.ProductRecipes)
+                    .HasForeignKey(d => d.MaterialId)
+                    .OnDelete(DeleteBehavior.Restrict); // CẤM xóa Vật tư nếu đang có món xài nó
+            });
+
+            // CẤU HÌNH INVENTORY TRANSACTION (LỊCH SỬ KHO)
+            builder.Entity<InventoryTransaction>(entity =>
+            {
+                entity.Property(e => e.QuantityChanged).HasColumnType("decimal(18, 3)");
+                entity.Property(e => e.RemainingQuantity).HasColumnType("decimal(18, 3)");
+                entity.Property(e => e.Note).HasMaxLength(500);
+
+                entity.HasOne(d => d.Material)
+                    .WithMany(p => p.InventoryTransactions)
+                    .HasForeignKey(d => d.MaterialId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

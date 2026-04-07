@@ -5,7 +5,6 @@ using CoffeeHouse.Application.Interfaces;
 using CoffeeHouse.Application.Mappings;
 using CoffeeHouse.Application.Services.Implementations;
 using CoffeeHouse.Application.Services.Interfaces;
-using CoffeeHouse.Domain.Entities;
 using CoffeeHouse.Infrastructure;
 using CoffeeHouse.Infrastructure.Repositories;
 using CoffeeHouse.Infrastructure.Services;
@@ -129,7 +128,7 @@ namespace CoffeeHouse.API
             builder.Services.AddScoped<IVoucherService, VoucherService>();
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddScoped<IEmailService, EmailService>();
-
+            builder.Services.AddScoped<IInventoryService, InventoryService>();
 
             // 2. KHỞI TẠO BIẾN app Ở ĐÂY
             var app = builder.Build();
