@@ -13,11 +13,13 @@ namespace CoffeeHouse.Application.Services.Implementations
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
+        private readonly IInventoryService _inventoryService;
 
-        public OrderService(IUnitOfWork unitOfWork, IConfiguration configuration)
+        public OrderService(IUnitOfWork unitOfWork, IConfiguration configuration, IInventoryService inventoryService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
+            _inventoryService = inventoryService;
         }
 
         public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto, Guid currentStaffId)
@@ -356,6 +358,25 @@ namespace CoffeeHouse.Application.Services.Implementations
                     _unitOfWork.Repository<Table>().Update(table);
                 }
             }
+
+            // 👉 TRỪ KHO TỰ ĐỘNG KHI CHECKOUT NGAY TRƯỚC KHI LƯU 
+            // Lấy danh sách sản phẩm và số lượng từ OrderDetails hiện có
+            var orderDetails = await _unitOfWork.Repository<OrderDetail>()
+                .GetQueryable()
+                .Where(od => od.OrderId == orderId)
+                .ToListAsync();
+
+            var productQuantities = new Dictionary<Guid, int>();
+            foreach (var od in orderDetails)
+            {
+                if (productQuantities.ContainsKey(od.ProductId))
+                    productQuantities[od.ProductId] += od.Quantity;
+                else
+                    productQuantities[od.ProductId] = od.Quantity;
+            }
+
+            // Chạy hàm trừ nguyên liệu, nó sẽ tự Include Recipe và log History Lịch sử xuất.
+            await _inventoryService.DeductStockForOrderAsync(orderId, productQuantities);
 
             await _unitOfWork.SaveChangesAsync();
 
