@@ -10,5 +10,8 @@ namespace CoffeeHouse.Application.Services.Interfaces
         Task<bool> CreateStaffAccountAsync(CreateStaffDto dto);
         Task<string> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<bool> ResetPasswordAsync(ResetPasswordDto dto);
+        Task<UserProfileDto> GetProfileAsync(Guid userId);
+        Task<bool> UpdateProfileAsync(Guid userId, UpdateProfileDto dto);
+        Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordDto dto);
     }
 }

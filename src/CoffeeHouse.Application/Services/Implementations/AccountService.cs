@@ -6,6 +6,7 @@ using CoffeeHouse.Domain.Entities;
 using CoffeeHouse.Domain.Enums;
 using CoffeeHouse.Infrastructure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CoffeeHouse.Application.Services.Implementations
@@ -204,6 +205,101 @@ namespace CoffeeHouse.Application.Services.Implementations
 
             var errors = string.Join("; ", result.Errors.Select(e => e.Description));
             throw new Exception($"Đặt lại mật khẩu thất bại: {errors}");
+        }
+
+        // =============================================
+        // TRANG CÁ NHÂN
+        // =============================================
+        public async Task<UserProfileDto> GetProfileAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new Exception("Không tìm thấy thông tin tài khoản.");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var mainRole = roles.FirstOrDefault() ?? "Customer";
+
+            var profileDto = new UserProfileDto
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+                FullName = user.FullName ?? string.Empty,
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
+                Role = mainRole
+            };
+
+            // Nếu là khách hàng -> lấy điểm
+            if (mainRole == "Customer")
+            {
+                var customer = await _uow.Repository<Customer>().GetQueryable().FirstOrDefaultAsync(c => c.IdentityId == user.Id.ToString());
+                if (customer != null) profileDto.RewardPoints = customer.RewardPoints;
+            }
+            // Nếu là staff -> lấy ngày vào làm
+            else if (mainRole == "Staff" || mainRole == "Kitchen")
+            {
+                var staff = await _uow.Repository<Staff>().GetQueryable().FirstOrDefaultAsync(s => s.IdentityId == user.Id.ToString());
+                if (staff != null) profileDto.HireDate = staff.HireDate;
+            }
+
+            return profileDto;
+        }
+
+        public async Task<bool> UpdateProfileAsync(Guid userId, UpdateProfileDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new Exception("Không tìm thấy thông tin tài khoản.");
+
+            user.FullName = dto.FullName;
+            user.PhoneNumber = dto.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new Exception($"Cập nhật thất bại: {errors}");
+            }
+
+            // Đồng bộ dữ liệu tên, số điện thoại xuống bảng phụ
+            var roles = await _userManager.GetRolesAsync(user);
+            var mainRole = roles.FirstOrDefault() ?? "Customer";
+
+            if (mainRole == "Customer")
+            {
+                var customer = await _uow.Repository<Customer>().GetQueryable().FirstOrDefaultAsync(c => c.IdentityId == user.Id.ToString());
+                if (customer != null)
+                {
+                    customer.FullName = dto.FullName;
+                    customer.PhoneNumber = dto.PhoneNumber;
+                    _uow.Repository<Customer>().Update(customer);
+                    await _uow.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                var staff = await _uow.Repository<Staff>().GetQueryable().FirstOrDefaultAsync(s => s.IdentityId == user.Id.ToString());
+                if (staff != null)
+                {
+                    staff.FullName = dto.FullName;
+                    _uow.Repository<Staff>().Update(staff);
+                    await _uow.SaveChangesAsync();
+                }
+            }
+
+            return true;
+        }
+
+        public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new Exception("Không tìm thấy thông tin tài khoản.");
+
+            var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                throw new Exception($"Đổi mật khẩu thất bại: {errors}");
+            }
+
+            return true;
         }
     }
 }
