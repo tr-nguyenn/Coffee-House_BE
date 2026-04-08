@@ -129,6 +129,8 @@ namespace CoffeeHouse.API
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
+            builder.Services.AddHttpClient<ILlmService, LlmService>();
+            builder.Services.AddScoped<IChatbotService, ChatbotService>();
 
             // 2. KHỞI TẠO BIẾN app Ở ĐÂY
             var app = builder.Build();
