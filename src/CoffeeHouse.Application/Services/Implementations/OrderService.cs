@@ -14,13 +14,15 @@ namespace CoffeeHouse.Application.Services.Implementations
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly IInventoryService _inventoryService;
+        private readonly IKitchenHubService _kitchenHubService;
 
-        public OrderService(IUnitOfWork unitOfWork, IConfiguration configuration, IInventoryService inventoryService)
+        public OrderService(IUnitOfWork unitOfWork, IConfiguration configuration, IInventoryService inventoryService, IKitchenHubService kitchenHubService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
             _inventoryService = inventoryService;
-        }
+            _kitchenHubService = kitchenHubService;
+        }   
 
         public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto, Guid currentStaffId)
         {
@@ -161,6 +163,12 @@ namespace CoffeeHouse.Application.Services.Implementations
             await _unitOfWork.Repository<Order>().AddAsync(order);
             await _unitOfWork.SaveChangesAsync();
 
+            // Bắn SignalR cập nhật Màn hình bếp
+            if (dto.Items.Any())
+            {
+                await _kitchenHubService.SendRefreshKitchenTicketsMessageAsync();
+            }
+
             return new OrderDto
             {
                 Id = order.Id,
@@ -238,6 +246,12 @@ namespace CoffeeHouse.Application.Services.Implementations
             order.FinalAmount += extraAmount; // Final lúc này tạm bằng Total, giảm giá tính lúc Checkout
 
             await _unitOfWork.SaveChangesAsync();
+
+            // Bắn SignalR cập nhật Màn hình bếp
+            if (dto.NewItems.Any())
+            {
+                await _kitchenHubService.SendRefreshKitchenTicketsMessageAsync();
+            }
 
             return new OrderDto
             {
@@ -422,6 +436,9 @@ namespace CoffeeHouse.Application.Services.Implementations
 
             _unitOfWork.Repository<OrderDetail>().Update(orderDetail);
             await _unitOfWork.SaveChangesAsync();
+            
+            // Bắn SignalR cập nhật Màn hình bếp
+            await _kitchenHubService.SendRefreshKitchenTicketsMessageAsync();
         }
 
         public async Task<OrderDto> OpenTableAsync(Guid tableId, Guid currentStaffId)

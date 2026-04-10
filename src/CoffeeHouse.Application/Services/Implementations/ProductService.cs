@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CoffeeHouse.Application.Common;
 using CoffeeHouse.Application.DTOs.Products;
 using CoffeeHouse.Application.Exceptions;
@@ -29,6 +29,7 @@ namespace CoffeeHouse.Application.Services.Implementations
             Expression<Func<Product, bool>> filter = p =>
                 (string.IsNullOrEmpty(search) || p.Name.ToLower().Contains(search)) &&
                 (!filterDto.CategoryId.HasValue || p.CategoryId == filterDto.CategoryId) &&
+                (!filterDto.IsAvailable.HasValue || p.IsAvailable == filterDto.IsAvailable) &&
                 (!filterDto.MinPrice.HasValue || p.Price >= filterDto.MinPrice) &&
                 (!filterDto.MaxPrice.HasValue || p.Price <= filterDto.MaxPrice);
 

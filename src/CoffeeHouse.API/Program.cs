@@ -131,6 +131,7 @@ namespace CoffeeHouse.API
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddHttpClient<ILlmService, LlmService>();
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
+            builder.Services.AddScoped<IKitchenHubService, KitchenHubService>();
 
             // 2. KHỞI TẠO BIẾN app Ở ĐÂY
             var app = builder.Build();
@@ -194,6 +195,7 @@ namespace CoffeeHouse.API
             app.UseAuthorization();
             app.MapControllers();
             app.MapHub<PaymentHub>("/paymentHub");
+            app.MapHub<KitchenHub>("/kitchenHub");
             app.Run();
         }
     }
