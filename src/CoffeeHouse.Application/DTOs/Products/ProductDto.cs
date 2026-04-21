@@ -12,6 +12,11 @@ namespace CoffeeHouse.Application.DTOs.Products
         public bool IsAvailable { get; set; }
         public Guid CategoryId { get; set; }
         public string? CategoryName { get; set; }
+
+        /// <summary>Số lượng ly tối đa có thể pha dựa trên tồn kho. -1 = không có công thức (không giới hạn).</summary>
+        public int MaxAvailableServings { get; set; } = -1;
+        /// <summary>True nếu MaxAvailableServings == 0 (hết nguyên liệu).</summary>
+        public bool IsOutOfStock { get; set; }
     }
 
     public class ProductFilterDto : BaseFilterDto

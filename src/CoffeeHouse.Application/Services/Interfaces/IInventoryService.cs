@@ -16,5 +16,11 @@ namespace CoffeeHouse.Application.Services.Interfaces
 
         // Lấy lịch sử xuất nhập kho (Hỗ trợ lọc theo loại, vật tư, thời gian)
         Task<IEnumerable<InventoryTransactionDto>> GetTransactionsAsync(int? type = null, Guid? materialId = null, DateTime? fromDate = null, DateTime? toDate = null);
+
+        /// <summary>
+        /// Tính số ly tối đa có thể pha cho batch sản phẩm (1 query DB duy nhất).
+        /// Trả về Dictionary{ProductId, MaxServings}. int.MaxValue = không có recipe (không giới hạn).
+        /// </summary>
+        Task<Dictionary<Guid, int>> CalculateMaxServingsForProductsAsync(List<Guid> productIds);
     }
 }

@@ -200,5 +200,52 @@ namespace CoffeeHouse.Application.Services.Implementations
 
             return transactions;
         }
+        // ==========================================
+        // 5. TÍNH SỐ LY TỐI ĐA CÓ THỂ PHA (BATCH - 1 QUERY DUY NHẤT)
+        // ==========================================
+        public async Task<Dictionary<Guid, int>> CalculateMaxServingsForProductsAsync(List<Guid> productIds)
+        {
+            if (productIds == null || !productIds.Any())
+                return new Dictionary<Guid, int>();
+
+            // 1 query duy nhất: Lấy tất cả Recipe kèm Material cho batch sản phẩm
+            var recipes = await _uow.Repository<ProductRecipe>()
+                .GetQueryable()
+                .AsNoTracking()
+                .Where(r => productIds.Contains(r.ProductId))
+                .Include(r => r.Material)
+                .ToListAsync();
+
+            var result = new Dictionary<Guid, int>();
+
+            // Group theo ProductId để tính Min(stock / quantity)
+            var grouped = recipes.GroupBy(r => r.ProductId);
+
+            foreach (var group in grouped)
+            {
+                int maxServings = int.MaxValue;
+                foreach (var recipe in group)
+                {
+                    if (recipe.Quantity <= 0) continue;
+
+                    int servingsFromThisMaterial = recipe.Material.StockQuantity <= 0
+                        ? 0
+                        : (int)Math.Floor(recipe.Material.StockQuantity / recipe.Quantity);
+
+                    maxServings = Math.Min(maxServings, servingsFromThisMaterial);
+                }
+                // Nếu tất cả recipe đều có Quantity <= 0, maxServings vẫn = int.MaxValue → gán 0
+                result[group.Key] = maxServings == int.MaxValue ? 0 : Math.Max(0, maxServings);
+            }
+
+            // Sản phẩm KHÔNG CÓ Recipe → không giới hạn tồn kho
+            foreach (var pid in productIds)
+            {
+                if (!result.ContainsKey(pid))
+                    result[pid] = int.MaxValue;
+            }
+
+            return result;
+        }
     }
 }

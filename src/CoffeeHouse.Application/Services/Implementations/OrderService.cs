@@ -43,6 +43,29 @@ namespace CoffeeHouse.Application.Services.Implementations
                 _unitOfWork.Repository<Table>().Update(table);
             }
 
+            // 2.5 👉 KIỂM TRA TỒN KHO (NẾU CẤU HÌNH CHẶN BÁN ÂM)
+            bool allowOverselling = _configuration.GetValue<bool>("InventorySettings:AllowOverselling", false);
+            if (!allowOverselling)
+            {
+                var productIdsToCheck = dto.Items.Select(i => i.ProductId).Distinct().ToList();
+                var servingsMap = await _inventoryService.CalculateMaxServingsForProductsAsync(productIdsToCheck);
+
+                foreach (var item in dto.Items)
+                {
+                    if (servingsMap.TryGetValue(item.ProductId, out int maxServings) && maxServings != int.MaxValue)
+                    {
+                        if (item.Quantity > maxServings)
+                        {
+                            var prod = await _unitOfWork.Repository<Product>().GetByIdAsync(item.ProductId);
+                            string productName = prod?.Name ?? item.ProductId.ToString();
+                            throw new Exception(
+                                $"Món \"{productName}\" chỉ còn đủ pha {maxServings} ly. Không thể bán vượt số lượng tồn kho!"
+                            );
+                        }
+                    }
+                }
+            }
+
             // 3. Khởi tạo Hóa đơn
             var order = new Order
             {
@@ -218,6 +241,29 @@ namespace CoffeeHouse.Application.Services.Implementations
 
             if (order == null) throw new Exception("Không tìm thấy hóa đơn này.");
             if (order.Status != OrderStatus.Processing) throw new Exception("Hóa đơn đã đóng, không thể gọi thêm món!");
+
+            // 👉 KIỂM TRA TỒN KHO (NẾU CẤU HÌNH CHẶN BÁN ÂM)
+            bool allowOverselling = _configuration.GetValue<bool>("InventorySettings:AllowOverselling", false);
+            if (!allowOverselling)
+            {
+                var productIdsToCheck = dto.NewItems.Select(i => i.ProductId).Distinct().ToList();
+                var servingsMap = await _inventoryService.CalculateMaxServingsForProductsAsync(productIdsToCheck);
+
+                foreach (var item in dto.NewItems)
+                {
+                    if (servingsMap.TryGetValue(item.ProductId, out int maxServings) && maxServings != int.MaxValue)
+                    {
+                        if (item.Quantity > maxServings)
+                        {
+                            var prod = await _unitOfWork.Repository<Product>().GetByIdAsync(item.ProductId);
+                            string productName = prod?.Name ?? item.ProductId.ToString();
+                            throw new Exception(
+                                $"Món \"{productName}\" chỉ còn đủ pha {maxServings} ly. Không thể bán vượt số lượng tồn kho!"
+                            );
+                        }
+                    }
+                }
+            }
 
             decimal extraAmount = 0;
 

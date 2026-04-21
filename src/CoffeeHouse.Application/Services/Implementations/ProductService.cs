@@ -14,12 +14,14 @@ namespace CoffeeHouse.Application.Services.Implementations
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
         private readonly IFileService _fileService;
+        private readonly IInventoryService _inventoryService;
 
-        public ProductService(IUnitOfWork uow, IMapper mapper, IFileService fileService)
+        public ProductService(IUnitOfWork uow, IMapper mapper, IFileService fileService, IInventoryService inventoryService)
         {
             _uow = uow;
             _mapper = mapper;
             _fileService = fileService;
+            _inventoryService = inventoryService;
         }
 
         public async Task<PagedResult<ProductDto>> GetAllPagedAsync(ProductFilterDto filterDto)
@@ -41,9 +43,30 @@ namespace CoffeeHouse.Application.Services.Implementations
                 orderBy: q => q.OrderByDescending(p => p.CreatedAt)
             );
 
+            var dtos = _mapper.Map<List<ProductDto>>(result.Items);
+
+            // 👉 Tính MaxAvailableServings cho batch sản phẩm (1 query DB duy nhất)
+            var productIds = dtos.Select(d => d.Id).ToList();
+            var servingsMap = await _inventoryService.CalculateMaxServingsForProductsAsync(productIds);
+
+            foreach (var dto in dtos)
+            {
+                if (servingsMap.TryGetValue(dto.Id, out int maxServings))
+                {
+                    // int.MaxValue = không có recipe → frontend nhận -1 (không giới hạn)
+                    dto.MaxAvailableServings = maxServings == int.MaxValue ? -1 : maxServings;
+                    dto.IsOutOfStock = maxServings <= 0;
+                }
+                else
+                {
+                    dto.MaxAvailableServings = -1;
+                    dto.IsOutOfStock = false;
+                }
+            }
+
             return new PagedResult<ProductDto>
             {
-                Items = _mapper.Map<List<ProductDto>>(result.Items),
+                Items = dtos,
                 TotalCount = result.TotalCount,
                 PageNumber = result.PageNumber,
                 PageSize = result.PageSize
